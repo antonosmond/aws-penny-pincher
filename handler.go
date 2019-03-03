@@ -2,8 +2,11 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"io/ioutil"
+	"log"
 	"sync"
+
+	"github.com/ghodss/yaml"
 
 	"github.com/antonosmond/aws-penny-pincher/config"
 	"github.com/antonosmond/aws-penny-pincher/ec2"
@@ -12,12 +15,25 @@ import (
 // WaitGroup to keep lambda alive until all go routines have completed
 var wg sync.WaitGroup
 
-func handleRequest(ctx context.Context, cfg config.Config) error {
+func handleRequest(ctx context.Context) error {
+
+	// load config
+	log.Println("Loading config...")
+	b, err := ioutil.ReadFile("config.yaml")
+	if err != nil {
+		log.Fatal(err)
+	}
+	var cfg *config.Config
+	if err := yaml.Unmarshal(b, &cfg); err != nil {
+		log.Fatal(err)
+	}
+	log.Println("Successfully loaded config!")
+	log.Printf("Rules to process: %d\n", len(cfg.Rules))
 
 	// process each rule from the config
 	for _, rule := range cfg.Rules {
 		if err := processRule(&rule); err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 	}
 
@@ -46,11 +62,11 @@ func processRule(rule *config.Rule) error {
 			switch resource.Type {
 			case "instance":
 				if err := processInstances(region, &resource); err != nil {
-					fmt.Println(err)
+					log.Println(err)
 					continue
 				}
 			default:
-				fmt.Printf("%s - skipping unknown resource type: %s\n", region, resource.Type)
+				log.Printf("%s - skipping unknown resource type: %s\n", region, resource.Type)
 			}
 		}
 

@@ -16,7 +16,7 @@ func DescribeRegions() (regions []string, err error) {
 		return regions, nil
 	}
 
-	svc := ec2.New(sess)
+	svc := ec2.New(sess, aws.NewConfig().WithRegion("us-east-1"))
 
 	output, err := svc.DescribeRegions(&ec2.DescribeRegionsInput{})
 	if err != nil {

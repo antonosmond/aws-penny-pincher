@@ -1,0 +1,11 @@
+rules:
+- name: stop instances
+  resources:
+  - type: instance
+    filters:
+    - name: instance-state-name
+      values:
+      - pending
+      - running
+    actions:
+    - stop
